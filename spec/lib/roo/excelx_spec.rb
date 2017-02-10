@@ -340,7 +340,53 @@ describe Roo::Excelx do
     let(:path) { 'test/files/named_cells.xlsx' }
 
     it 'returns the expected result' do
-      expect(subject.labels).to eq [["anton", [5, 3, "Sheet1"]], ["berta", [4, 2, "Sheet1"]], ["caesar", [7, 2, "Sheet1"]]]
+      expectations = [
+        ["anton", [[5, 3, "Sheet1"]]],
+        ["berta", [[4, 2, "Sheet1"]]],
+        ["caesar", [[7, 2, "Sheet1"]]],
+        ["column_range",
+          [ [5, 4, "Sheet1"],
+            [6, 4, "Sheet1"],
+            [7, 4, "Sheet1"],
+            [8, 4, "Sheet1"],
+            [9, 4, "Sheet1"]
+          ]
+        ],
+        ["grid_range",
+          [ [13, 2, "Sheet1"],
+            [14, 2, "Sheet1"],
+            [13, 3, "Sheet1"],
+            [14, 3, "Sheet1"],
+            [13, 4, "Sheet1"],
+            [14, 4, "Sheet1"]
+          ]
+        ],
+        ["non_adjacent_range",
+          [ [11, 2, "Sheet1"],
+            [11, 3, "Sheet1"],
+            [11, 4, "Sheet1"],
+            [13, 2, "Sheet1"],
+            [14, 2, "Sheet1"],
+            [13, 3, "Sheet1"],
+            [14, 3, "Sheet1"],
+            [13, 4, "Sheet1"],
+            [14, 4, "Sheet1"],
+            [5, 4, "Sheet1"],
+            [6, 4, "Sheet1"],
+            [7, 4, "Sheet1"],
+            [8, 4, "Sheet1"],
+            [9, 4, "Sheet1"]
+          ]
+        ],
+        ["row_range",
+          [ [11, 2, "Sheet1"],
+            [11, 3, "Sheet1"],
+            [11, 4, "Sheet1"]
+          ]
+        ]
+      ]
+
+      expect(subject.labels).to eq expectations
     end
   end
 
