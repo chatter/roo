@@ -52,8 +52,11 @@ module TestLabels
     options = { name: "named_cells", format: [:openoffice, :excelx, :libreoffice] }
 
 
+    xlabels = expected_labels
+    xlabels.delete_at(5) unless options[:format].eql? :excelx
+
     with_each_spreadsheet(options) do |oo|
-      assert_equal expected_labels, oo.labels, "error with labels array in class #{oo.class}"
+      assert_equal xlabels, oo.labels, "error with labels array in class #{oo.class}"
     end
   end
 
@@ -87,8 +90,14 @@ module TestLabels
       row, col = oo.label("grid_range")[3]
       assert_equal "grid_range_2_2", oo.cell(row, col)
 
-      row, col = oo.label("non_adjacent_range")[5]
-      assert_equal "grid_range_2_1", oo.cell(row, col)
+      # excel is currently only one that seems to format non-adjancent named
+      # ranges: https://bz.apache.org/ooo/show_bug.cgi?id=25769
+      if options[:format].eql? :excelx
+        row, col = oo.label("non_adjacent_range")[5]
+        assert_equal "grid_range_2_1", oo.cell(row, col)
+      else
+        assert_empty oo.label("non_adjacent_range")
+      end
 
       row, col = oo.label("row_range")[1]
       assert_equal "row_range_2", oo.cell(row, col)
@@ -104,6 +113,9 @@ module TestLabels
       end
 
       # Reihenfolge row, col,sheet analog zu #label
+      xlabels = expected_labels
+      xlabels.delete_at(5) unless options[:format].eql? :excelx
+
       assert_equal expected_labels, oo.labels, "error with labels array in class #{oo.class}"
     end
   end
@@ -138,8 +150,14 @@ module TestLabels
       row, col = oo.label("grid_range")[3]
       assert_equal "grid_range_2_2", oo.cell(row, col)
 
-      row, col = oo.label("non_adjacent_range")[5]
-      assert_equal "grid_range_2_1", oo.cell(row, col)
+      # excel is currently only one that seems to format non-adjancent named
+      # ranges: https://bz.apache.org/ooo/show_bug.cgi?id=25769
+      if options[:format].eql? :excelx
+        row, col = oo.label("non_adjacent_range")[5]
+        assert_equal "grid_range_2_1", oo.cell(row, col)
+      else
+        assert_empty oo.label("non_adjacent_range")
+      end
 
       row, col = oo.label("row_range")[1]
       assert_equal "row_range_2", oo.cell(row, col)
