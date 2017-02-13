@@ -30,11 +30,34 @@ module Roo
       # aka labels
       def defined_names
         Hash[doc.xpath('//definedName').map do |defined_name|
-          # "Sheet1!$C$5"
-          sheet, coordinates = defined_name.text.split('!$', 2)
-          col, row = coordinates.split('$')
           name = defined_name['name']
-          [name, Label.new(name, sheet, row, col)]
+
+          # non-adjacent named cells are separated via comma
+          [name] << defined_name.text.split(',').reduce([]) { |memo, range|
+            # each 'range', where a range could just be a single cell, is separated into
+            # two parts by '!$'.
+            memo << range.split('!$').each_slice(2).collect { |(sheet, coordinates)|
+              # a range will use ':$' to separate the start cell from the end cell. a
+              # single cell will not have the colon.
+              [sheet] << coordinates.split(':$').map { |cell|
+                # each cell has a column and row identifier, separated by a '$'
+                cell.split('$')
+              }
+            }.reduce([]) { |memo, (sheet, ((x1, x2), (y1, y2)))|
+              # a named range with a single cell will not have a second range
+              y1 ||= x1
+              y2 ||= x2
+
+              # create an array containing a range for columns and rows
+              memo << [sheet, (x1..y1), (x2..y2)]
+            }.reduce([]) { |memo, (sheet, cols, rows)|
+              # iterate over each column/row combination to create a label
+              memo << cols.to_a.product(rows.to_a).map { |col, row|
+                Label.new(name, sheet, row, col)
+              }
+            }
+          # flatten nested arrays, occurs with non-adjacent named cells
+          }.flatten
         end]
       end
 
