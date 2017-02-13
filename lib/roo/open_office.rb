@@ -74,9 +74,12 @@ module Roo
 
     def method_missing(m, *args)
       read_labels
+
       # is method name a label name
       if @label.key?(m.to_s)
-        row, col = label(m.to_s)
+        # gets the first label and returns the sheet for that
+        # TODO: return list of sheets for label?
+        row, col = label(m.to_s)[0]
         cell(row, col)
       else
         # call super for methods like #a1
@@ -175,24 +178,18 @@ module Roo
     # (nil,nil) if label is not defined
     def label(labelname)
       read_labels
-      return [nil, nil, nil] if @label.size < 1 || !@label.key?(labelname)
-      [
-        @label[labelname][1].to_i,
-        ::Roo::Utils.letter_to_number(@label[labelname][2]),
-        @label[labelname][0]
-      ]
+
+      return [] if @label.empty? || !@label.key?(labelname)
+
+      @label[labelname]
     end
 
     # Returns an array which all labels. Each element is an array with
     # [labelname, [row,col,sheetname]]
     def labels(_sheet = nil)
       read_labels
-      @label.map do |label|
-        [label[0], # name
-         [label[1][1].to_i, # row
-          ::Roo::Utils.letter_to_number(label[1][2]), # column
-          label[1][0], # sheet
-         ]]
+      @label.map do |name, label|
+        [name, label]
       end
     end
 
@@ -562,14 +559,27 @@ module Roo
 
     def read_labels
       @label ||= Hash[doc.xpath('//table:named-range').map do |ne|
-        #-
-        # $Sheet1.$C$5
-        #+
         name              = attribute(ne, 'name').to_s
-        sheetname, coords = attribute(ne, 'cell-range-address').to_s.split('.$')
-        col, row          = coords.split('$')
-        sheetname         = sheetname[1..-1] if sheetname[0, 1] == '$'
-        [name, [sheetname, row, col]]
+        sheetname, coords = attribute(ne, 'cell-range-address').to_s.split('.$', 2)
+
+        # A range will use ':.$' to separate the start cell from the end cell. A
+        # single cell will not have the separator.
+        [name] << coords.split(':.$').map { |cell|
+          cell.split('$')
+        }.each_slice(2).map { |((x1, x2), (y1, y2))|
+          # a named range with a single cell will not have a second range
+          y1 ||= x1
+          y2 ||= x2
+
+          # create an array containing a range for columns and rows
+          [(x1..y1), (x2..y2)]
+        }.reduce([]) { |memo, (cols, rows)|
+          # iterate over each column/row combination to create an entry
+          cols.to_a.product(rows.to_a).map { |col, row|
+            memo << [row.to_i, ::Roo::Utils.letter_to_number(col), sheetname.slice(1..-1)]
+          }
+          memo
+        }
       end]
     end
 
