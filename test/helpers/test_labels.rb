@@ -52,10 +52,12 @@ module TestLabels
     options = { name: "named_cells", format: [:openoffice, :excelx, :libreoffice] }
 
 
-    xlabels = expected_labels
-    xlabels.delete_at(5) unless options[:format].eql? :excelx
+
 
     with_each_spreadsheet(options) do |oo|
+      xlabels = expected_labels
+      xlabels.delete_at(5) unless oo.is_a? Roo::Excelx
+
       assert_equal xlabels, oo.labels, "error with labels array in class #{oo.class}"
     end
   end
@@ -92,7 +94,7 @@ module TestLabels
 
       # excel is currently only one that seems to format non-adjancent named
       # ranges: https://bz.apache.org/ooo/show_bug.cgi?id=25769
-      if options[:format].eql? :excelx
+      if oo.is_a? Roo::Excelx
         row, col = oo.label("non_adjacent_range")[5]
         assert_equal "grid_range_2_1", oo.cell(row, col)
       else
@@ -114,9 +116,9 @@ module TestLabels
 
       # Reihenfolge row, col,sheet analog zu #label
       xlabels = expected_labels
-      xlabels.delete_at(5) unless options[:format].eql? :excelx
+      xlabels.delete_at(5) unless oo.is_a? Roo::Excelx
 
-      assert_equal expected_labels, oo.labels, "error with labels array in class #{oo.class}"
+      assert_equal xlabels, oo.labels, "error with labels array in class #{oo.class}"
     end
   end
 
@@ -152,7 +154,7 @@ module TestLabels
 
       # excel is currently only one that seems to format non-adjancent named
       # ranges: https://bz.apache.org/ooo/show_bug.cgi?id=25769
-      if options[:format].eql? :excelx
+      if oo.is_a? Roo::Excelx
         row, col = oo.label("non_adjacent_range")[5]
         assert_equal "grid_range_2_1", oo.cell(row, col)
       else
