@@ -80,7 +80,9 @@ module Roo
 
     def method_missing(method, *args)
       if (label = workbook.defined_names[method.to_s])
-        safe_send(sheet_for(label.sheet).cells[label.key], :value)
+        # gets the first label and returns the sheet for that
+        # TODO: return list of sheets for label?
+        safe_send(sheet_for(label[0].sheet).cells[label[0].key], :value)
       else
         # call super for methods like #a1
         super
@@ -233,22 +235,22 @@ module Roo
       sheet_for(sheet).cells.inspect
     end
 
-    # returns the row,col values of the labelled cell
-    # (nil,nil) if label is not defined
+    # returns an array of the row,col,sheet values of the labelled cell
+    # [] if label is not defined
     def label(name)
       labels = workbook.defined_names
-      return [nil, nil, nil] if labels.empty? || !labels.key?(name)
+      return [] if labels.empty? || !labels.key?(name)
 
-      [labels[name].row, labels[name].col, labels[name].sheet]
+      labels[name].map { |l| [l.row, l.col, l.sheet] }
     end
 
     # Returns an array which all labels. Each element is an array with
-    # [labelname, [row,col,sheetname]]
+    # [labelname, [[row,col,sheetname],...]]
     def labels
-      @labels ||= workbook.defined_names.map do |name, label|
+      @labels ||= workbook.defined_names.map do |name, labels|
         [
           name,
-          [label.row, label.col, label.sheet]
+          labels.map { |l| [l.row, l.col, l.sheet] }
         ]
       end
     end
